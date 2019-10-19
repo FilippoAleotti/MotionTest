@@ -21,7 +21,7 @@ if __name__ == '__main__':
     pose = np.concatenate([pose[3:], pose[:3]])
 
     with tf.Session() as session:
-        intrinsics = read_intrinsics(os.path.abspath("calib.txt"))
+        intrinsics = read_intrinsics(os.path.abspath(os.path.join('calib',"calib.txt")))
         # scaling the intrinsics
         mask = tf.constant(np.asarray([[640/1226, 1, 640/1226], [192/370, 192/370 , 1], [1, 1, 1]], dtype=np.float32))
         
@@ -35,11 +35,10 @@ if __name__ == '__main__':
         depth = tf.convert_to_tensor(1./(disp+1e-7), dtype=tf.float32)
 
         rigid_flow = compute_rigid_flow(depth, pose, intrinsics, reverse_pose=False)
-        rigid_flow_cm = flow_to_color(rigid_flow)
         coordinator = tf.train.Coordinator()
         threads = tf.train.start_queue_runners(session, coord=coordinator)
 
-        rf = session.run(rigid_flow_cm)
-        write_flow(rf[0]*255, "rigid_flow_" + args.type + "_" + str(args.id) +".png")
+        rf = session.run(rigid_flow)
+        write_flow(rf[0], os.path.join('outputs', "rigid_flow_" + args.type + "_" + str(args.id) +".flo"))
         coordinator.request_stop()
         coordinator.join(threads)
